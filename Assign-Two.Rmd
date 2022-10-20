@@ -1,0 +1,18 @@
+---
+title: "Assingment-Two"
+output: html_document
+date: "2022-10-20"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# U7117486 Assignment Two 
+
+## Load in packages
+```{r}
+library(pacman)
+p_load(bookdown, tidyverse, ggforce, flextable, latex2exp, png, magick, metafor) 
+```
+
