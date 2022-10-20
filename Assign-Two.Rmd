@@ -45,3 +45,30 @@ colnames(summary2) <- c("Species", "oa.mean", "oa.sd", "oa.n")
 summary <- merge(summary1, summary2)
 summary
 ```
+## Reading in the clark paper meta data
+```{r}
+clark_meta <- read_csv("clark_paper_data.csv")
+clark_meta
+```
+
+## Binding the summary results to the study information meta data provided
+```{r}
+clark_data <- bind_cols(clark_meta, summary)
+clark_data
+```
+
+## Reading in the larger meta data set 
+```{r}
+ocean_meta <- read_csv("ocean_meta_data.csv")
+ocean_meta
+```
+
+## Binding the clark data to the larger meta data set 
+```{r}
+clark_data[, c(12)] <- sapply(clark_data[, c(12)], as.character)
+clark_data[, c(7)] <- sapply(clark_data[, c(7)], as.character)
+clark_data[, c(8)] <- sapply(clark_data[, c(8)], as.character)
+
+merged_data <- bind_rows(ocean_meta, clark_data)
+merged_data
+```
