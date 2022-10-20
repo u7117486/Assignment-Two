@@ -21,3 +21,15 @@ p_load(bookdown, tidyverse, ggforce, flextable, latex2exp, png, magick, metafor)
 data <- read_csv("OA_activitydat_20190302_BIOL3207.csv")
 data
 ```
+
+## Omitting N/A data
+```{r}
+data <- na.omit(data)
+data
+```
+
+## Drop irrelevant columns
+```{r}
+data <- subset(data, select = -c(comment, loc))
+data
+```
