@@ -33,3 +33,15 @@ data
 data <- subset(data, select = -c(comment, loc))
 data
 ```
+
+## Creating a summary of results 
+```{r summaryTab}
+summary1<- filter(data, treatment == "control") %>% group_by(species) %>% summarise(mean(activity), sd(activity), n())
+colnames(summary1) <- c("Species", "ctrl.mean", "ctrl.sd", "ctrl.n")
+
+summary2<- filter(data, treatment == "CO2") %>% group_by(species) %>% summarise(mean(activity), sd(activity), n())
+colnames(summary2) <- c("Species", "oa.mean", "oa.sd", "oa.n")
+
+summary <- merge(summary1, summary2)
+summary
+```
