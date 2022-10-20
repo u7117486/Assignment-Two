@@ -16,3 +16,8 @@ library(pacman)
 p_load(bookdown, tidyverse, ggforce, flextable, latex2exp, png, magick, metafor) 
 ```
 
+## Reading in the csv file 
+```{r}
+data <- read_csv("OA_activitydat_20190302_BIOL3207.csv")
+data
+```
