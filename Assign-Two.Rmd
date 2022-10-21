@@ -1,7 +1,9 @@
 ---
-title: "Assingment-Two"
+title: "Assignment-Two"
 output: html_document
 date: "2022-10-20"
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r setup, include=FALSE}
@@ -70,5 +72,31 @@ clark_data[, c(7)] <- sapply(clark_data[, c(7)], as.character)
 clark_data[, c(8)] <- sapply(clark_data[, c(8)], as.character)
 
 merged_data <- bind_rows(ocean_meta, clark_data)
+merged_data
+
+
+# Getting rid of negative data
+merged_data <- merged_data[which(merged_data$ctrl.n > 0),]
+merged_data <- merged_data[which(merged_data$ctrl.mean > 0),]
+merged_data <- merged_data[which(merged_data$ctrl.sd > 0),]
+merged_data <- merged_data[which(merged_data$oa.n > 0),]
+merged_data <- merged_data[which(merged_data$oa.mean > 0),]
+merged_data <- merged_data[which(merged_data$oa.sd > 0),]
+
+# Checking that negatives are excluded
+max(merged_data$ctrl.mean,na.rm=FALSE)
+min(merged_data$ctrl.mean,na.rm=FALSE)
+max(merged_data$oa.mean,na.rm=FALSE)
+min(merged_data$oa.mean,na.rm=FALSE)
+max(merged_data$ctrl.n,na.rm=FALSE)
+min(merged_data$ctrl.n,na.rm=FALSE)
+max(merged_data$oa.n,na.rm=FALSE)
+min(merged_data$oa.n,na.rm=FALSE)
+```
+
+## Correctly calculate the log response ratio (lnRR) effect size for every row of the dataframe using metafor’s escalc() function.
+```{r}
+# Log Response Ratio (lnRR)
+merged_data <- metafor::escalc(measure = "ROM", m1i = ctrl.mean, sd1i = ctrl.sd, n1i = ctrl.n, m2i = oa.mean, sd2i = oa.sd, n2i = oa.n, data = merged_data, var.names = c("lnRR", "vlnRR"))
 merged_data
 ```
