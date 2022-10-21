@@ -3,7 +3,7 @@ title: "Assignment-Two"
 output: html_document
 date: "2022-10-20"
 editor_options: 
-  chunk_output_type: console
+  chunk_output_type: inline
 ---
 
 ```{r setup, include=FALSE}
@@ -98,5 +98,26 @@ min(merged_data$oa.n,na.rm=FALSE)
 ```{r}
 # Log Response Ratio (lnRR)
 merged_data <- metafor::escalc(measure = "ROM", m1i = ctrl.mean, sd1i = ctrl.sd, n1i = ctrl.n, m2i = oa.mean, sd2i = oa.sd, n2i = oa.n, data = merged_data, var.names = c("lnRR", "vlnRR"))
+
+merged_data$residual <- 1:nrow(merged_data)
 merged_data
 ```
+
+# Correct meta-analytic model fitted to the data that controls for the sampling variance of lnRR. The model should include a random effect of study and observation. Use metafor’s rma.mv() function.
+```{r}
+metareg_v <- rma.mv(lnRR ~ 1, V = vlnRR, 
+                    random = list(~1|Study, 
+                                  ~1|residual), 
+                    test = "t", dfs = "contain", 
+                    data = merged_data)
+summary(metareg_v)
+
+r2 <- orchaRd::r2_ml(metareg_v)
+r2
+# vi = vector to specify the corresponding sampling variances.
+# yi = 	vector to specify the observed effect sizes or outcomes.
+```
+```{r}
+
+```
+
