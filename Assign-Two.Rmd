@@ -112,6 +112,7 @@ merged_data$residual <- 1:nrow(merged_data)
 
 ```{r}
 tibble(merged_data)
+colnames(merged_data)
 ```
 # Correct meta-analytic model fitted to the data that controls for the sampling variance of lnRR. The model should include a random effect of study and observation. Use metafor’s rma.mv() function.
 
@@ -137,23 +138,19 @@ predict(MLMA)
 
 
 ```{r V, echo=TRUE}
-## Meta Analytic Model fitted to the data - controls for sampling variance of lnRR.
-MLML <- rma.mv(lnRR ~ 1 + Effect.type , V = vlnRR,
+## Meta Analytic Model showing the Effect Type 
+MAMET <- rma.mv(lnRR ~ 1 + Effect.type , V = vlnRR,
                         random = list(~1 | Study,
                                       ~1 | residual), 
                         dfs = "contain", 
                         test = "t", 
                         data = merged_data)
-summary(MLML)
-
-## How much variation does this model explain in lnRR? 
-r2 <- orchaRd::r2_ml(MLML)
-r2
+summary(MAMET)
 ```
 
 ```{r}
 # Proportion of total variability when excluding sampling variance
-orchaRd::i2_ml(MLMA, data = merged_data)
+orchaRd::i2_ml(MAMET, data = merged_data)
 ```
 
 ```{r}
@@ -165,15 +162,56 @@ rma(yi = lnRR,
     data = merged_data)
 ```
 
-```{r}
-On average, there is an approximate 14% decrease in activity of fish for every 1% increase in ocean acidification when compared against the control. We are 95% confident that the true mean falls between -37.13 and 8.65%. There is a significant amount of heterogeneity among the effects (Q = 736,088,769, df = 763, p < 0.0001) with effect sizes expected to be as low as -442.03% and as high as	413.54% 95% of the time (i2 total = 100%). 10% of the model is explained with the r^2 Conditional. The conditional R2 tells us that the full model explains 10% of varaince in effect size, accounting for both fixed and random effects. 
-
-```
-
-
 ## Forest plot showing the mean estimate, 95% confidence interval, and prediction interval with clearly labelled axes, number of samples and studies plotted on figure
 
 ```{r}
 orchaRd::orchard_plot(MLML, data = merged_data, group = "Study", mod = "Effect.type",
     xlab = "Z-Transformed Correlation Coefficient (Zr)", angle = 45)
+```
+
+```{r}
+On average, there is an approximate 14% decrease in activity of fish for every 1% increase in ocean acidification when compared against the control. We are 95% confident that the true mean falls between -37.13 and 8.65%. There is a significant amount of heterogeneity among the effects (Q = 736,088,769, df = 763, p < 0.0001) with effect sizes expected to be as low as -442.03% and as high as	413.54% 95% of the time (i2 total = 100%). 10% of the model is explained with the r^2 Conditional. The conditional R2 tells us that the full model explains 10% of varaince in effect size, accounting for both fixed and random effects. The forest plot demonstrates that majority (50) of the studies published results with a strong effect type, with 427 samples across those studies. Studies with no effect type had the second most studies published (30) with 234 samples. And lastly, 11 of the studies published in this meta-analysis had a weak effect type, and only 103 samples. 
+```
+
+## Funnel plot for visually assessing the possibility of publication bias.
+```{r}
+stderror <- sqrt(merged_data$vlnRR)
+
+metafor::funnel(x = merged_data$lnRR,
+                vi = stderror,
+                yaxis = "seinv", 
+                digits = 2, 
+                xlim = c(-1, 1),
+                levels = c(0.1, 0.05, 0.01),
+                shade = c("white", "gray55", "gray 75"), 
+                atransf=tanh, 
+                legend = TRUE)
+
+```
+
+## Time-lag plot assessing how effect sizes may or may not have changed through time. -- Using Year of Print
+```{r}
+ggplot(merged_data, aes(y = lnRR, x = Year..print., size = 1/sqrt(vlnRR))) + geom_point(alpha = 0.3) +
+    geom_smooth(method = lm, col = "red", show.legend = FALSE) + labs(x = "Publication Year",
+    y = "Fisher's Z-transformed Correlation Coefficient (Zr)", size = "Precision (1/SE)") +
+    theme_classic()
+```
+## Formal meta-regression model that includes year as a moderator (fixed effect) to test for time-lag bias
+
+```{r}
+metareg_time <- rma.mv(lnRR ~ Year..print., V = vlnRR, random = list(~1 | Study, ~1 | residual),
+    test = "t", dfs = "contain", data = merged_data)
+summary(metareg_time)
+```
+
+```{r}
+r2_time <- orchaRd::r2_ml(metareg_time)  #'ADD YOUR CODE HERE'
+r2_time
+```
+
+## Formal meta-regression model that includes inverse sampling variance (i.e., 1vlnRR) to test for file-drawer biases
+```{r}
+metareg_time_file <- rma.mv(lnRR ~ Year..print. + vlnRR, V = vlnRR, random = list(~1 | Study, ~1 | residual),
+    test = "t", dfs = "contain", data = merged_data)
+summary(metareg_time_file)
 ```
