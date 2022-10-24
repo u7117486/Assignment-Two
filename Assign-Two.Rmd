@@ -15,7 +15,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ## Load in packages
 ```{r}
 library(pacman)
-p_load(bookdown, tidyverse, ggforce, flextable, latex2exp, png, magick, metafor) 
+p_load(bookdown, tidyverse, ggforce, flextable, latex2exp, png, magick, metafor, xtable) 
 ```
 
 ## Reading in the csv file 
@@ -72,8 +72,8 @@ clark_data[, c(7)] <- sapply(clark_data[, c(7)], as.character)
 clark_data[, c(8)] <- sapply(clark_data[, c(8)], as.character)
 
 merged_data <- bind_rows(ocean_meta, clark_data)
-merged_data
 
+colnames(merged_data)[16] <- "Life_Stage"
 
 # Getting rid of negative data
 merged_data <- merged_data[which(merged_data$ctrl.n > 0),]
@@ -97,27 +97,83 @@ min(merged_data$oa.n,na.rm=FALSE)
 ## Correctly calculate the log response ratio (lnRR) effect size for every row of the dataframe using metafor’s escalc() function.
 ```{r}
 # Log Response Ratio (lnRR)
-merged_data <- metafor::escalc(measure = "ROM", m1i = ctrl.mean, sd1i = ctrl.sd, n1i = ctrl.n, m2i = oa.mean, sd2i = oa.sd, n2i = oa.n, data = merged_data, var.names = c("lnRR", "vlnRR"))
+merged_data <- metafor::escalc(measure = "ROM", 
+                               m1i = ctrl.mean,
+                               sd1i = ctrl.sd, 
+                               n1i = ctrl.n, 
+                               m2i = oa.mean, 
+                               sd2i = oa.sd, 
+                               n2i = oa.n, 
+                               data = merged_data, 
+                               var.names = c("lnRR", "vlnRR"))
 
 merged_data$residual <- 1:nrow(merged_data)
-merged_data
 ```
 
+```{r}
+tibble(merged_data)
+```
 # Correct meta-analytic model fitted to the data that controls for the sampling variance of lnRR. The model should include a random effect of study and observation. Use metafor’s rma.mv() function.
-```{r}
-metareg_v <- rma.mv(lnRR ~ 1, V = vlnRR, 
-                    random = list(~1|Study, 
-                                  ~1|residual), 
-                    test = "t", dfs = "contain", 
-                    data = merged_data)
-summary(metareg_v)
 
-r2 <- orchaRd::r2_ml(metareg_v)
+```{r V, echo=TRUE}
+## Meta Analytic Model fitted to the data - controls for sampling variance of lnRR.
+MLMA <- rma.mv(lnRR ~ 1 + Life_Stage, V = vlnRR,
+                        random = list(~1 | Study,
+                                      ~1 | residual), 
+                        dfs = "contain", 
+                        test = "t", 
+                        data = merged_data)
+summary(MLMA)
+
+## How much variation does this model explain in lnRR? 
+r2 <- orchaRd::r2_ml(MLMA)
 r2
-# vi = vector to specify the corresponding sampling variances.
-# yi = 	vector to specify the observed effect sizes or outcomes.
 ```
+
 ```{r}
+## Prediction intervals
+predict(MLMA)
+```
+
+
+```{r V, echo=TRUE}
+## Meta Analytic Model fitted to the data - controls for sampling variance of lnRR.
+MLML <- rma.mv(lnRR ~ 1 + Effect.type , V = vlnRR,
+                        random = list(~1 | Study,
+                                      ~1 | residual), 
+                        dfs = "contain", 
+                        test = "t", 
+                        data = merged_data)
+summary(MLML)
+
+## How much variation does this model explain in lnRR? 
+r2 <- orchaRd::r2_ml(MLML)
+r2
+```
+
+```{r}
+# Proportion of total variability when excluding sampling variance
+orchaRd::i2_ml(MLMA, data = merged_data)
+```
+
+```{r}
+## Showing I2 results 
+
+rma(yi = lnRR, 
+    vi = vlnRR, 
+    method = "DL", 
+    data = merged_data)
+```
+
+```{r}
+On average, there is an approximate 14% decrease in activity of fish for every 1% increase in ocean acidification when compared against the control. We are 95% confident that the true mean falls between -37.13 and 8.65%. There is a significant amount of heterogeneity among the effects (Q = 736,088,769, df = 763, p < 0.0001) with effect sizes expected to be as low as -442.03% and as high as	413.54% 95% of the time (i2 total = 100%). 10% of the model is explained with the r^2 Conditional. The conditional R2 tells us that the full model explains 10% of varaince in effect size, accounting for both fixed and random effects. 
 
 ```
 
+
+## Forest plot showing the mean estimate, 95% confidence interval, and prediction interval with clearly labelled axes, number of samples and studies plotted on figure
+
+```{r}
+orchaRd::orchard_plot(MLML, data = merged_data, group = "Study", mod = "Effect.type",
+    xlab = "Z-Transformed Correlation Coefficient (Zr)", angle = 45)
+```
