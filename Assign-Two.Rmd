@@ -109,13 +109,11 @@ merged_data <- metafor::escalc(measure = "ROM",
 
 merged_data$residual <- 1:nrow(merged_data)
 ```
-
+## Assessing data in tibble
 ```{r}
 tibble(merged_data)
-colnames(merged_data)
 ```
-# Correct meta-analytic model fitted to the data that controls for the sampling variance of lnRR. The model should include a random effect of study and observation. Use metafor’s rma.mv() function.
-
+## Meta-analytic model fitted to data that controls for the sampling variance of lnRR - includes effect of study and observation. 
 ```{r V, echo=TRUE}
 ## Meta Analytic Model fitted to the data - controls for sampling variance of lnRR.
 MLMA <- rma.mv(lnRR ~ 1 + Life_Stage, V = vlnRR,
@@ -126,19 +124,16 @@ MLMA <- rma.mv(lnRR ~ 1 + Life_Stage, V = vlnRR,
                         data = merged_data)
 summary(MLMA)
 
-## How much variation does this model explain in lnRR? 
 r2 <- orchaRd::r2_ml(MLMA)
 r2
 ```
-
+## Predication Intervals
 ```{r}
-## Prediction intervals
 predict(MLMA)
 ```
 
-
+## Meta Analytic Model Showing Effect Type
 ```{r V, echo=TRUE}
-## Meta Analytic Model showing the Effect Type 
 MAMET <- rma.mv(lnRR ~ 1 + Effect.type , V = vlnRR,
                         random = list(~1 | Study,
                                       ~1 | residual), 
@@ -147,15 +142,13 @@ MAMET <- rma.mv(lnRR ~ 1 + Effect.type , V = vlnRR,
                         data = merged_data)
 summary(MAMET)
 ```
-
+## Proportion of total variability when excluding sampling variance 
 ```{r}
-# Proportion of total variability when excluding sampling variance
 orchaRd::i2_ml(MAMET, data = merged_data)
 ```
 
+## I2 results
 ```{r}
-## Showing I2 results 
-
 rma(yi = lnRR, 
     vi = vlnRR, 
     method = "DL", 
@@ -165,8 +158,8 @@ rma(yi = lnRR,
 ## Forest plot showing the mean estimate, 95% confidence interval, and prediction interval with clearly labelled axes, number of samples and studies plotted on figure
 
 ```{r}
-orchaRd::orchard_plot(MLML, data = merged_data, group = "Study", mod = "Effect.type",
-    xlab = "Z-Transformed Correlation Coefficient (Zr)", angle = 45)
+orchaRd::orchard_plot(MAMET, data = merged_data, group = "Study", mod = "Effect.type",
+    xlab = "Effect Type (lnRR)", angle = 45)
 ```
 
 ```{r}
@@ -197,7 +190,6 @@ ggplot(merged_data, aes(y = lnRR, x = Year..print., size = 1/sqrt(vlnRR))) + geo
     theme_classic()
 ```
 ## Formal meta-regression model that includes year as a moderator (fixed effect) to test for time-lag bias
-
 ```{r}
 metareg_time <- rma.mv(lnRR ~ Year..print., V = vlnRR, random = list(~1 | Study, ~1 | residual),
     test = "t", dfs = "contain", data = merged_data)
@@ -205,13 +197,16 @@ summary(metareg_time)
 ```
 
 ```{r}
-r2_time <- orchaRd::r2_ml(metareg_time)  #'ADD YOUR CODE HERE'
+r2_time <- orchaRd::r2_ml(metareg_time) 
 r2_time
 ```
 
 ## Formal meta-regression model that includes inverse sampling variance (i.e., 1vlnRR) to test for file-drawer biases
 ```{r}
-metareg_time_file <- rma.mv(lnRR ~ Year..print. + vlnRR, V = vlnRR, random = list(~1 | Study, ~1 | residual),
+merged_data <- merged_data %>%
+    mutate(Year_c = Year..print. - mean(Year..print.))
+
+metareg_time_file <- rma.mv(lnRR ~ Year_c + vlnRR, V = vlnRR, random = list(~1 | Study, ~1 | residual),
     test = "t", dfs = "contain", data = merged_data)
 summary(metareg_time_file)
 ```
