@@ -15,7 +15,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ### Load in packages
 ```{r}
 library(pacman)
-p_load(bookdown, tidyverse, ggforce, flextable, latex2exp, png, magick, metafor, xtable) 
+p_load(bookdown, tidyverse, ggforce, flextable, latex2exp, png, magick, metafor) 
 ```
 
 ### Reading in the csv file 
@@ -131,7 +131,9 @@ r2
 ### Predication Intervals
 ```{r}
 prediction <- predict(MLMA)
-prediction
+
+pred <- as.data.frame(prediction)
+
 ```
 
 ### Meta Analytic Model Showing Effect Type
@@ -169,8 +171,9 @@ orchaRd::orchard_plot(MAMET,
                       xlab = "Effect Type (lnRR)", 
                       angle = 45)
 ```
+Figure 1: Forest Plot of Effect Types of Each Study in the "Merged Data" Dataset 
 
-On average, there is an approximate `r x = prediction[1,1]; x`% decrease in activity of fish for every 1% increase in ocean acidification when compared against the control. We are 95% confident that the true mean falls between `r x = prediction[1,3]; x`% and `r x = prediction[1,4]; x`%. There is a significant amount of heterogeneity among the effects (Q = 736,088,769, df = 763, p < 0.0001) with effect sizes expected to be as low as `r x = prediction[1,5]; x`% and as high as	`r x = prediction[1,6]; x`%, 95% of the time (i2 total = `r x = i2[1,1]; x`%). 10% of the model is explained with the r^2 Conditional. The conditional R2 tells us that the full model explains 10% of varaince in effect size, accounting for both fixed and random effects. The forest plot demonstrates that majority (50) of the studies published results with a strong effect type, with 427 samples across those studies. Studies with no effect type had the second most studies published (30) with 234 samples. And lastly, 11 of the studies published in this meta-analysis had a weak effect type, and only 103 samples.
+On average, there is an approximate `r x = pred[1,1]; x`% decrease in activity of fish for every 1% increase in ocean acidification when compared against the control. We are 95% confident that the true mean falls between `r x = pred[1,3]; x`% and `r x = pred[1,4]; x`%. There is a significant amount of heterogeneity among the effects (Q = 736,088,769, df = 763, p < 0.0001) with effect sizes expected to be as low as `r x = pred[1,5]; x`% and as high as `r x = pred[1,6]; x`%, 95% of the time (i2 total = `r x = i2[1,1]; x`%). The conditional R2 tells us that the full model explains `r x = i2[2,1]; x`% of variance in effect size, accounting for both fixed and random effects. The forest plot demonstrates that majority (50) of the studies published results with a strong effect type, with 427 samples across those studies. Studies with no effect type had the second most studies published (30) with 234 samples. And lastly, 11 of the studies published in this meta-analysis had a weak effect type, and only 103 samples.
 
 ### Funnel plot for visually assessing the possibility of publication bias.
 ```{r}
@@ -187,6 +190,7 @@ metafor::funnel(x = merged_data$lnRR,
                 legend = TRUE)
 
 ```
+Figure 2: Funnel Plot of The Transformed Log Ratio of Means against the Inverse Standard Error
 
 ### Time-lag plot assessing how effect sizes may or may not have changed through time. -- Using Year of Print
 ```{r}
@@ -202,10 +206,17 @@ ggplot(merged_data, aes(y = lnRR,
                         size = "Precision (1/SE)") +
                         theme_classic()
 ```
+
+
 ### Formal meta-regression model that includes year as a moderator (fixed effect) to test for time-lag bias
 ```{r}
-metareg_time <- rma.mv(lnRR ~ Year..print., V = vlnRR, random = list(~1 | Study, ~1 | residual),
-    test = "t", dfs = "contain", data = merged_data)
+metareg_time <- rma.mv(lnRR ~ Year..print.,
+                       V = vlnRR, 
+                       random = list(~1 | Study,
+                                     ~1 | residual),
+                       test = "t", 
+                       dfs = "contain", 
+                       data = merged_data)
 summary(metareg_time)
 ```
 
@@ -219,8 +230,13 @@ r2_time
 merged_data <- merged_data %>%
     mutate(Year_c = Year..print. - mean(Year..print.))
 
-metareg_time_file <- rma.mv(lnRR ~ Year_c + vlnRR, V = vlnRR, random = list(~1 | Study, ~1 | residual),
-    test = "t", dfs = "contain", data = merged_data)
+metareg_time_file <- rma.mv(lnRR ~ Year_c + vlnRR, 
+                            V = vlnRR, 
+                            random = list(~1 | Study,
+                                          ~1 | residual),
+                            test = "t", 
+                            dfs = "contain", 
+                            data = merged_data)
 summary(metareg_time_file)
 ```
 

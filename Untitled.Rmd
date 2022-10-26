@@ -1,0 +1,8 @@
+---
+title: "Untitled"
+output: html_document
+date: "2022-10-26"
+---
+
+
+On average, there is an approximate      % decrease in activity of fish for every 1% increase in ocean acidification when compared against the control. We are 95% confident that the true mean falls between `r x = prediction[1,3]; x`% and `r x = prediction[1,4]; x`%. There is a significant amount of heterogeneity among the effects (Q = 736,088,769, df = 763, p < 0.0001) with effect sizes expected to be as low as `r x = prediction[1,5]; x`% and as high as	`r x = prediction[1,6]; x`%, 95% of the time (i2 total = `r x = i2[1,1]; x`%). 10% of the model is explained with the r^2 Conditional. The conditional R2 tells us that the full model explains 10% of varaince in effect size, accounting for both fixed and random effects. The forest plot demonstrates that majority (50) of the studies published results with a strong effect type, with 427 samples across those studies. Studies with no effect type had the second most studies published (30) with 234 samples. And lastly, 11 of the studies published in this meta-analysis had a weak effect type, and only 103 samples.
