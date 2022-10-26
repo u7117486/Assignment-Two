@@ -10,33 +10,33 @@ editor_options:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# U7117486 Assignment Two 
+## U7117486 Assignment Two 
 
-## Load in packages
+### Load in packages
 ```{r}
 library(pacman)
 p_load(bookdown, tidyverse, ggforce, flextable, latex2exp, png, magick, metafor, xtable) 
 ```
 
-## Reading in the csv file 
+### Reading in the csv file 
 ```{r}
 data <- read_csv("OA_activitydat_20190302_BIOL3207.csv")
 data
 ```
 
-## Omitting N/A data
+### Omitting N/A data
 ```{r}
 data <- na.omit(data)
 data
 ```
 
-## Drop irrelevant columns
+### Drop irrelevant columns
 ```{r}
 data <- subset(data, select = -c(comment, loc))
 data
 ```
 
-## Creating a summary of results 
+### Creating a summary of results 
 ```{r summaryTab}
 summary1<- filter(data, treatment == "control") %>% group_by(species) %>% summarise(mean(activity), sd(activity), n())
 colnames(summary1) <- c("Species", "ctrl.mean", "ctrl.sd", "ctrl.n")
@@ -47,25 +47,25 @@ colnames(summary2) <- c("Species", "oa.mean", "oa.sd", "oa.n")
 summary <- merge(summary1, summary2)
 summary
 ```
-## Reading in the clark paper meta data
+### Reading in the clark paper meta data
 ```{r}
 clark_meta <- read_csv("clark_paper_data.csv")
 clark_meta
 ```
 
-## Binding the summary results to the study information meta data provided
+### Binding the summary results to the study information meta data provided
 ```{r}
 clark_data <- bind_cols(clark_meta, summary)
 clark_data
 ```
 
-## Reading in the larger meta data set 
+### Reading in the larger meta data set 
 ```{r}
 ocean_meta <- read_csv("ocean_meta_data.csv")
 ocean_meta
 ```
 
-## Binding the clark data to the larger meta data set 
+### Binding the clark data to the larger meta data set 
 ```{r}
 clark_data[, c(12)] <- sapply(clark_data[, c(12)], as.character)
 clark_data[, c(7)] <- sapply(clark_data[, c(7)], as.character)
@@ -94,7 +94,7 @@ max(merged_data$oa.n,na.rm=FALSE)
 min(merged_data$oa.n,na.rm=FALSE)
 ```
 
-## Correctly calculate the log response ratio (lnRR) effect size for every row of the dataframe using metafor’s escalc() function.
+### Correctly calculate the log response ratio (lnRR) effect size for every row of the dataframe using metafor’s escalc() function.
 ```{r}
 # Log Response Ratio (lnRR)
 merged_data <- metafor::escalc(measure = "ROM", 
@@ -109,14 +109,15 @@ merged_data <- metafor::escalc(measure = "ROM",
 
 merged_data$residual <- 1:nrow(merged_data)
 ```
-## Assessing data in tibble
+### Assessing data in tibble
 ```{r}
 tibble(merged_data)
 ```
-## Meta-analytic model fitted to data that controls for the sampling variance of lnRR - includes effect of study and observation. 
-```{r V, echo=TRUE}
+### Meta-analytic model fitted to data that controls for the sampling variance of lnRR - includes effect of study and observation. 
+```{r, echo=TRUE}
 ## Meta Analytic Model fitted to the data - controls for sampling variance of lnRR.
-MLMA <- rma.mv(lnRR ~ 1 + Life_Stage, V = vlnRR,
+MLMA <- rma.mv(lnRR ~ 1, 
+                        V = vlnRR,
                         random = list(~1 | Study,
                                       ~1 | residual), 
                         dfs = "contain", 
@@ -127,14 +128,16 @@ summary(MLMA)
 r2 <- orchaRd::r2_ml(MLMA)
 r2
 ```
-## Predication Intervals
+### Predication Intervals
 ```{r}
-predict(MLMA)
+prediction <- predict(MLMA)
+prediction
 ```
 
-## Meta Analytic Model Showing Effect Type
+### Meta Analytic Model Showing Effect Type
 ```{r V, echo=TRUE}
-MAMET <- rma.mv(lnRR ~ 1 + Effect.type , V = vlnRR,
+MAMET <- rma.mv(lnRR ~ 1 + Effect.type , 
+                        V = vlnRR,
                         random = list(~1 | Study,
                                       ~1 | residual), 
                         dfs = "contain", 
@@ -142,12 +145,13 @@ MAMET <- rma.mv(lnRR ~ 1 + Effect.type , V = vlnRR,
                         data = merged_data)
 summary(MAMET)
 ```
-## Proportion of total variability when excluding sampling variance 
+### Proportion of total variability when excluding sampling variance 
 ```{r}
-orchaRd::i2_ml(MAMET, data = merged_data)
+i2 <- tibble(orchaRd::i2_ml(MAMET, data = merged_data))
+i2
 ```
 
-## I2 results
+### I2 results
 ```{r}
 rma(yi = lnRR, 
     vi = vlnRR, 
@@ -155,18 +159,20 @@ rma(yi = lnRR,
     data = merged_data)
 ```
 
-## Forest plot showing the mean estimate, 95% confidence interval, and prediction interval with clearly labelled axes, number of samples and studies plotted on figure
+### Forest plot showing the mean estimate, 95% confidence interval, and prediction interval with clearly labelled axes, number of samples and studies plotted on figure
 
 ```{r}
-orchaRd::orchard_plot(MAMET, data = merged_data, group = "Study", mod = "Effect.type",
-    xlab = "Effect Type (lnRR)", angle = 45)
+orchaRd::orchard_plot(MAMET, 
+                      data = merged_data, 
+                      group = "Study", 
+                      mod = "Effect.type",
+                      xlab = "Effect Type (lnRR)", 
+                      angle = 45)
 ```
 
-```{r}
-On average, there is an approximate 14% decrease in activity of fish for every 1% increase in ocean acidification when compared against the control. We are 95% confident that the true mean falls between -37.13 and 8.65%. There is a significant amount of heterogeneity among the effects (Q = 736,088,769, df = 763, p < 0.0001) with effect sizes expected to be as low as -442.03% and as high as	413.54% 95% of the time (i2 total = 100%). 10% of the model is explained with the r^2 Conditional. The conditional R2 tells us that the full model explains 10% of varaince in effect size, accounting for both fixed and random effects. The forest plot demonstrates that majority (50) of the studies published results with a strong effect type, with 427 samples across those studies. Studies with no effect type had the second most studies published (30) with 234 samples. And lastly, 11 of the studies published in this meta-analysis had a weak effect type, and only 103 samples. 
-```
+On average, there is an approximate `r x = prediction[1,1]; x`% decrease in activity of fish for every 1% increase in ocean acidification when compared against the control. We are 95% confident that the true mean falls between `r x = prediction[1,3]; x`% and `r x = prediction[1,4]; x`%. There is a significant amount of heterogeneity among the effects (Q = 736,088,769, df = 763, p < 0.0001) with effect sizes expected to be as low as `r x = prediction[1,5]; x`% and as high as	`r x = prediction[1,6]; x`%, 95% of the time (i2 total = `r x = i2[1,1]; x`%). 10% of the model is explained with the r^2 Conditional. The conditional R2 tells us that the full model explains 10% of varaince in effect size, accounting for both fixed and random effects. The forest plot demonstrates that majority (50) of the studies published results with a strong effect type, with 427 samples across those studies. Studies with no effect type had the second most studies published (30) with 234 samples. And lastly, 11 of the studies published in this meta-analysis had a weak effect type, and only 103 samples.
 
-## Funnel plot for visually assessing the possibility of publication bias.
+### Funnel plot for visually assessing the possibility of publication bias.
 ```{r}
 stderror <- sqrt(merged_data$vlnRR)
 
@@ -182,14 +188,21 @@ metafor::funnel(x = merged_data$lnRR,
 
 ```
 
-## Time-lag plot assessing how effect sizes may or may not have changed through time. -- Using Year of Print
+### Time-lag plot assessing how effect sizes may or may not have changed through time. -- Using Year of Print
 ```{r}
-ggplot(merged_data, aes(y = lnRR, x = Year..print., size = 1/sqrt(vlnRR))) + geom_point(alpha = 0.3) +
-    geom_smooth(method = lm, col = "red", show.legend = FALSE) + labs(x = "Publication Year",
-    y = "Fisher's Z-transformed Correlation Coefficient (Zr)", size = "Precision (1/SE)") +
-    theme_classic()
+ggplot(merged_data, aes(y = lnRR, 
+                        x = Year..print., 
+                        size = 1/sqrt(vlnRR))) + 
+                        geom_point(alpha = 0.3) +
+                        geom_smooth(method = lm, 
+                                    col = "red", 
+                                    show.legend = FALSE) + 
+                        labs(x = "Publication Year",
+                        y = "Fisher's Z-transformed Correlation Coefficient (Zr)", 
+                        size = "Precision (1/SE)") +
+                        theme_classic()
 ```
-## Formal meta-regression model that includes year as a moderator (fixed effect) to test for time-lag bias
+### Formal meta-regression model that includes year as a moderator (fixed effect) to test for time-lag bias
 ```{r}
 metareg_time <- rma.mv(lnRR ~ Year..print., V = vlnRR, random = list(~1 | Study, ~1 | residual),
     test = "t", dfs = "contain", data = merged_data)
@@ -201,7 +214,7 @@ r2_time <- orchaRd::r2_ml(metareg_time)
 r2_time
 ```
 
-## Formal meta-regression model that includes inverse sampling variance (i.e., 1vlnRR) to test for file-drawer biases
+### Formal meta-regression model that includes inverse sampling variance (i.e., 1vlnRR) to test for file-drawer biases
 ```{r}
 merged_data <- merged_data %>%
     mutate(Year_c = Year..print. - mean(Year..print.))
@@ -210,3 +223,10 @@ metareg_time_file <- rma.mv(lnRR ~ Year_c + vlnRR, V = vlnRR, random = list(~1 |
     test = "t", dfs = "contain", data = merged_data)
 summary(metareg_time_file)
 ```
+
+
+A written paragraph that discusses the potential for publication bias based on the meta-regression results. What type of publication bias, if any, appears to be present in the data? If publication bias is present, what does it mean and what might be contributing to such bias?
+```{r}
+
+```
+
