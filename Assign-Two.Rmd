@@ -117,17 +117,18 @@ tibble(merged_data)
 ```{r, echo=TRUE}
 ## Meta Analytic Model fitted to the data - controls for sampling variance of lnRR.
 MLMA <- rma.mv(lnRR ~ 1, 
-                        V = vlnRR,
-                        random = list(~1 | Study,
-                                      ~1 | residual), 
-                        dfs = "contain", 
-                        test = "t", 
-                        data = merged_data)
+               V = vlnRR,
+               random = list(~1 | Study,
+                             ~1 | residual), 
+               dfs = "contain", 
+               test = "t", 
+               data = merged_data)
 summary(MLMA)
 
 r2 <- orchaRd::r2_ml(MLMA)
 r2
 ```
+
 ### Predication Intervals
 ```{r}
 prediction <- predict(MLMA)
@@ -202,11 +203,11 @@ ggplot(merged_data, aes(y = lnRR,
                                     col = "red", 
                                     show.legend = FALSE) + 
                         labs(x = "Publication Year",
-                        y = "Fisher's Z-transformed Correlation Coefficient (Zr)", 
+                        y = "Log Response Ratio (lnRR)", 
                         size = "Precision (1/SE)") +
                         theme_classic()
 ```
-
+Figure 3: Time-Lag Plotof lnRR as a function of the Publication Year.
 
 ### Formal meta-regression model that includes year as a moderator (fixed effect) to test for time-lag bias
 ```{r}
@@ -245,4 +246,28 @@ A written paragraph that discusses the potential for publication bias based on t
 ```{r}
 
 ```
+
+time-lag: 
+There does appear to be a clear positive relationship with year.
+Also of note are that the earlier year studies have much higher sampling variance (i.e., lower precision), just like we might expect.
+These early studies appear to have a lower (exaggerated) effect size compared with studies that are done in later years. 
+
+
+funnel : 
+We can see from Fig. 1 above a non-typical funnel shape. 
+- most studies are flat against the bottom and not in the funnel - there are four studies that are outside of the funel - three to the left and one to the right 
+
+
+
+Quantifying time lag bias using multilevel meta-regression: 
+r2 marginal <- Time-lag explains `r x = r2_time[1,1]; x`% of the variation in lnRR. 
+It’s clear that we have evidence of a time-lag bias???? (year increases, intercept decreases alot) The mean effect size is predicted to increase as more studies accumulate! But, wait, we also have evidence for other possible publication biases, such as ‘file-drawer’ effects. 
+Great! That was easy. Just like any old linear mixed effect model we can just add moderators / fixed effects to the formula. Here, we can see that there is clear evidence, even when accounting for the covariance between the two, for both file-drawer and time-lag biases in these data.
+
+
+With year 0 gone:
+The overall mean correlation (r) when small sample and time-lag biases are controlled for is (intercept)
+
+MLMA:
+Yes, there is evidence for publication bias because the slope estimate for vlnRR is significant. We can see from this model that the adjusted lnRR when there is no uncertainty (i.e., the intercept) is -.1424 with a 95% confidence interval that overlaps zero (i.e., 95% CI = -0.3713 to 0.0865). 
 
