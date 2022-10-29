@@ -177,9 +177,12 @@ orchaRd::orchard_plot(MAMET,
                       xlab = "Effect Type (lnRR)", 
                       angle = 45)
 ```
+
 Figure 1: Forest Plot of Effect Types of Each Study in the "Merged Data" Dataset 
 
-On average, there is an approximate `r x = pred[1,1]; x`% decrease in activity of fish for every 1% increase in ocean acidification when compared against the control. We are 95% confident that the true mean falls between `r x = pred[1,3]; x`% and `r x = pred[1,4]; x`%. There is a significant amount of heterogeneity among the effects (Q = 736,088,769, df = 763, p < 0.0001) with effect sizes expected to be as low as `r x = pred[1,5]; x`% and as high as `r x = pred[1,6]; x`%, 95% of the time (i2 total = `r x = i2[1,1]; x`%). The conditional R2 tells us that the full model explains `r x = i2[2,1]; x`% of variance in effect size, accounting for both fixed and random effects. The forest plot demonstrates that majority (50) of the studies published results with a strong effect type, with 427 samples across those studies. Studies with no effect type had the second most studies published (30) with 234 samples. And lastly, 11 of the studies published in this meta-analysis had a weak effect type, and only 103 samples.
+On average, there is an approximate `r x = pred[1,1]; x`% decrease in activity of fish for every 1% increase in ocean acidification when compared against the control, this is shown in Table 2. We are 95% confident that the true mean falls between `r x = pred[1,3]; x`% and `r x = pred[1,4]; x`%. There is a significant amount of heterogeneity among the effects (Q = 736,088,769, df = 763, p < 0.0001) with effect sizes expected to be as low as `r x = pred[1,5]; x`% and as high as `r x = pred[1,6]; x`%, 95% of the time (i2 total = `r x = i2[1,1]; x`%). Found in Table 3, the conditional R2 tells us that the full model explains `r x = i2[2,1]; x`% of variance in effect size, accounting for both fixed and random effects. In Figure 1, the forest plot demonstrates that majority (51) of the studies published results with a strong effect type, with 420 samples across those studies. Studies with no effect type had the second most studies published (30) with 233 samples. And lastly, 11 of the studies published in this meta-analysis had a weak effect type, and only 102 samples.
+
+- average 8 samps per study in strong, 7 in no effect, and 10 in no effect - small studies are susceptible to huge sampling error. This can result in over-inflated effect sizes. - so does this mean that because there were more samples per study in the weak group that they are actually closer to the study average (true average)
 
 ### Funnel plot for vi
 ```{r}
@@ -187,14 +190,21 @@ metafor::funnel(x = merged_data$lnRR,
                 vi = merged_data$vlnRR,
                 yaxis = "seinv", 
                 digits = 2, 
-                levels = c(0.1, 0.05, 0.01),
                 ylim = c(1, 100),
+                level = c(0.1, 0.05, 0.01),
                 shade = c("white", "gray55", "gray 75"), 
                 atransf=tanh, 
-                legend = TRUE)
+                legend = TRUE,
+                ylab = "Precision (1/SE)", 
+                xlab = "lnRR")
 
 ```
-Figure 2: Funnel Plot of The Transformed Log Ratio of Means against the Inverse Standard Error, with a ylim of 100 to exclude outliers
+Figure 2: Funnel Plot of The Transformed Log Ratio of Means against the Precision, with a ylim of 100 to exclude outliers.
+
+-- more data points on the left of the bottom than the right -- does this have something to do with pub bias? 
+ -- If there is bias, for example because smaller studies without statistically significant effects (shown as open circles in Figure 10.4.a, Panel A) remain unpublished, this will lead to an asymmetrical appearance of the funnel plot with a gap in a bottom corner of the graph (Panel B). In this situation the effect calculated in a meta-analysis will tend to overestimate the intervention effect (Egger 1997a, Villar 1997). The more pronounced the asymmetry, the more likely it is that the amount of bias will be substantial.
+--  Typically, trials with smaller sample sizes produce less precise estimated effects. As sample size increases the precision of the estimated effect increases and the size of the standard error decreases. The vertical axis in the funnel plot is inverted, with zero at the top. Therefore, studies with less precise estimated effects scatter more widely at the bottom of the plot
+-- As sample size increases, the precision of the estimated effects increases and the spread of points narrows.
 
 ### Time-lag plot assessing how effect sizes may or may not have changed through time. -- Using Year of Print
 ```{r}
@@ -210,7 +220,11 @@ ggplot(merged_data, aes(y = lnRR,
                         size = "Precision (1/SE)") +
                         theme_classic()
 ```
+
 Figure 3: Time-Lag Plot of lnRR as a function of the Publication Year.
+
+
+early ones are negative and over time they get closer to 0 
 
 ### Formal meta-regression model that includes year as a moderator (fixed effect) to test for time-lag bias
 ```{r}
@@ -230,8 +244,9 @@ r2_time <- orchaRd::r2_ml(metareg_time)
 r2_time
 r2_tib <- tibble(r2_time)
 ```
+Table 5: Variation Explained by Time When Results were Published in lnRR 
 
-### Formal meta-regression model that includes inverse sampling variance (i.e., 1vlnRR) to test for file-drawer biases
+### Formal meta-regression model that includes inverse sampling variance (i.e., 1vlnRR) to test for file-drawer biases - also getting rid of Year 0
 ```{r}
 merged_data <- merged_data %>%
     mutate(Year_c = Year..print. - mean(Year..print.))
@@ -245,16 +260,30 @@ metareg_time_file <- rma.mv(lnRR ~ Year_c + vlnRR,
                             data = merged_data)
 summary(metareg_time_file)
 ```
-Table 5: Meta-Regression Model with Inverse Sampling Variance Testing for File-Drawer Bias
+
+```{r}
+r2_time2 <- orchaRd::r2_ml(metareg_time_file) 
+r2_time2
+r2_tib2 <- tibble(r2_time2)
+```
+
+Table 6: Meta-Regression Model with Inverse Sampling Variance Testing for File-Drawer Bias
 
 A written paragraph that discusses the potential for publication bias based on the meta-regression results. What type of publication bias, if any, appears to be present in the data? If publication bias is present, what does it mean and what might be contributing to such bias?
 ```{r}
 
 ```
-Based on the meta-regression results, it seems that there is evidence for publicatin bias, specifically, time-lag bias ? 
+Based on the meta-regression results, it seems that there is evidence for publication bias, specifically, time-lag bias ? 
 
 meta analysis relies on things being selected at random but it seems as though some studies are only showing their results with big effects 
 
+
+Funnel Plot: 
+The asymmetry of the funnel plot in Figure 1 demonstrates publication bias is present in this meta-analysis. The majority of the points are leaning towards the left side of the estimate, with there being an outlier in the grey-zone in the left side around 25 on the y-axis  The majority of the data points between 1 and 25 are bunched together on the left side. 
+
+The Time-Lag Plot also demonstrates that there is publication bias present in the sample, it shows that there is a positive relationship between the average effect size and the year of publication, as they increase together. Studies in 2011 had a higher sampling variance than other years, and a bigger spread of lnRR. The earlier studies (before 2015) have higher data points for lnRR. In Table 5, the time-lag explains `r x = r2_tib[1,1]; x`% of the variation in lnRR. This could be seen as evidence of a time-lag bias as the mean effect size is expected to increase as more studies accumulate. 
+
+It’s clear that we have evidence of a time-lag bias. The mean effect size is predicted to decrease as more studies accumulate! But, wait, we also have evidence for other possible publication biases, such as ‘file-drawer’ effects. We can actually create a model that accounts for both of these effects, and that accounts for the possible covariance between the two (i.e., sampling variance is expected to be high in early years). Let’s fit that model.
 
 
 
@@ -266,7 +295,7 @@ These early studies appear to have a lower (exaggerated) effect size compared wi
 
 funnel : 
 We can see from Fig. 1 above a non-typical funnel shape. 
-- most studies are flat against the bottom and not in the funnel - there are four studies that are outside of the funel - three to the left and one to the right 
+- 
 The reason why the shape is a funnel is because the sampling variance is expected to decrease (or the precision increase) when the sample size, and thus power, increases.
 ‘High-powered’ studies are at the top of the ‘funnel’ in the narrow-necked region, so to say, because we expect the effect size from these studies to fluctuate very little based on the sampling process. Think back to your sampling distribution. When sample sizes were very large, the sampling distribution becomes very narrow!
 
