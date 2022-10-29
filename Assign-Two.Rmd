@@ -12,11 +12,13 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## U7117486 Assignment Two 
 
+
 ### Load in packages
 ```{r}
 library(pacman)
 p_load(bookdown, tidyverse, ggforce, flextable, latex2exp, png, magick, metafor) 
 ```
+
 
 ### Reading in the csv file 
 ```{r}
@@ -24,17 +26,20 @@ data <- read_csv("OA_activitydat_20190302_BIOL3207.csv")
 data
 ```
 
+
 ### Omitting N/A data
 ```{r}
 data <- na.omit(data)
 data
 ```
 
+
 ### Drop irrelevant columns
 ```{r}
 data <- subset(data, select = -c(comment, loc))
 data
 ```
+
 
 ### Creating a summary of results 
 ```{r summaryTab}
@@ -47,11 +52,14 @@ colnames(summary2) <- c("Species", "oa.mean", "oa.sd", "oa.n")
 summary <- merge(summary1, summary2)
 summary
 ```
+
+
 ### Reading in the clark paper meta data
 ```{r}
 clark_meta <- read_csv("clark_paper_data.csv")
 clark_meta
 ```
+
 
 ### Binding the summary results to the study information meta data provided
 ```{r}
@@ -59,11 +67,13 @@ clark_data <- bind_cols(clark_meta, summary)
 clark_data
 ```
 
-### Reading in the larger meta data set 
+
+###Reading in the larger meta data set 
 ```{r}
 ocean_meta <- read_csv("ocean_meta_data.csv")
 ocean_meta
 ```
+
 
 ### Binding the clark data to the larger meta data set 
 ```{r}
@@ -94,6 +104,7 @@ max(merged_data$oa.n,na.rm=FALSE)
 min(merged_data$oa.n,na.rm=FALSE)
 ```
 
+
 ### Correctly calculate the log response ratio (lnRR) effect size for every row of the dataframe using metafor’s escalc() function.
 ```{r}
 # Log Response Ratio (lnRR)
@@ -109,12 +120,16 @@ merged_data <- metafor::escalc(measure = "ROM",
 
 merged_data$residual <- 1:nrow(merged_data)
 ```
+
+
 ### Assessing data in tibble 
 ```{r}
 tibble(merged_data)
 
 ```
 Table 1: Tibble of Merged Data (Ocean Data and Clark Data) with means, sd and sample size for both treatments, as well as lnRR, vlnRR and residual columns. 
+
+
 ### Meta-analytic model fitted to data that controls for the sampling variance of lnRR - includes effect of study and observation. 
 ```{r, echo=TRUE}
 ## Meta Analytic Model fitted to the data - controls for sampling variance of lnRR.
@@ -132,6 +147,7 @@ r2 <- orchaRd::r2_ml(MLMA)
 r2
 ```
 
+
 ### Predication Intervals
 ```{r}
 prediction <- predict(MLMA)
@@ -141,8 +157,9 @@ pred
 ```
 Table 2: Prediction Intervals of the MLMA Results
 
+
 ### Meta Analytic Model Showing Effect Type
-```{r V, echo=TRUE}
+```{r}
 MAMET <- rma.mv(lnRR ~ Effect.type, 
                         V = vlnRR,
                         random = list(~1 | Study,
@@ -152,12 +169,15 @@ MAMET <- rma.mv(lnRR ~ Effect.type,
                         data = merged_data)
 summary(MAMET)
 ```
+
+
 ### Proportion of total variability when excluding sampling variance 
 ```{r}
 i2 <- tibble(orchaRd::i2_ml(MAMET, data = merged_data))
 i2
 ```
 Table 3: i2 Values of the MAMET Results
+
 
 ### I2 results
 ```{r}
@@ -166,6 +186,7 @@ rma(yi = lnRR,
     method = "DL", 
     data = merged_data)
 ```
+
 
 ### Forest plot showing the mean estimate, 95% confidence interval, and prediction interval with clearly labelled axes, number of samples and studies plotted on figure
 
@@ -182,7 +203,6 @@ Figure 1: Forest Plot of Effect Types of Each Study in the "Merged Data" Dataset
 
 On average, there is an approximate `r x = pred[1,1]; x`% decrease in activity of fish for every 1% increase in ocean acidification when compared against the control, this is shown in Table 2. We are 95% confident that the true mean falls between `r x = pred[1,3]; x`% and `r x = pred[1,4]; x`%. There is a significant amount of heterogeneity among the effects (Q = 736,088,769, df = 763, p < 0.0001) with effect sizes expected to be as low as `r x = pred[1,5]; x`% and as high as `r x = pred[1,6]; x`%, 95% of the time (i2 total = `r x = i2[1,1]; x`%). Found in Table 3, the conditional R2 tells us that the full model explains `r x = i2[2,1]; x`% of variance in effect size, accounting for both fixed and random effects. In Figure 1, the forest plot demonstrates that majority (51) of the studies published results with a strong effect type, with 420 samples across those studies. Studies with no effect type had the second most studies published (30) with 233 samples. And lastly, 11 of the studies published in this meta-analysis had a weak effect type, and only 102 samples.
 
-- average 8 samps per study in strong, 7 in no effect, and 10 in no effect - small studies are susceptible to huge sampling error. This can result in over-inflated effect sizes. - so does this mean that because there were more samples per study in the weak group that they are actually closer to the study average (true average)
 
 ### Funnel plot for vi
 ```{r}
@@ -199,12 +219,9 @@ metafor::funnel(x = merged_data$lnRR,
                 xlab = "lnRR")
 
 ```
+
 Figure 2: Funnel Plot of The Transformed Log Ratio of Means against the Precision, with a ylim of 100 to exclude outliers.
 
--- more data points on the left of the bottom than the right -- does this have something to do with pub bias? 
- -- If there is bias, for example because smaller studies without statistically significant effects (shown as open circles in Figure 10.4.a, Panel A) remain unpublished, this will lead to an asymmetrical appearance of the funnel plot with a gap in a bottom corner of the graph (Panel B). In this situation the effect calculated in a meta-analysis will tend to overestimate the intervention effect (Egger 1997a, Villar 1997). The more pronounced the asymmetry, the more likely it is that the amount of bias will be substantial.
---  Typically, trials with smaller sample sizes produce less precise estimated effects. As sample size increases the precision of the estimated effect increases and the size of the standard error decreases. The vertical axis in the funnel plot is inverted, with zero at the top. Therefore, studies with less precise estimated effects scatter more widely at the bottom of the plot
--- As sample size increases, the precision of the estimated effects increases and the spread of points narrows.
 
 ### Time-lag plot assessing how effect sizes may or may not have changed through time. -- Using Year of Print
 ```{r}
@@ -223,9 +240,6 @@ ggplot(merged_data, aes(y = lnRR,
 
 Figure 3: Time-Lag Plot of lnRR as a function of the Publication Year.
 
-
-early ones are negative and over time they get closer to 0 
-
 ### Formal meta-regression model that includes year as a moderator (fixed effect) to test for time-lag bias
 ```{r}
 metareg_time <- rma.mv(lnRR ~ Year..print.,
@@ -235,16 +249,21 @@ metareg_time <- rma.mv(lnRR ~ Year..print.,
                        test = "t", 
                        dfs = "contain", 
                        data = merged_data)
-summary(metareg_time)
+sumtime <- summary(metareg_time)
+sumtime
 ```
+
 Table 4: Summary of the Multivariate Meta-Analysis Model for Time-Lag Bias
+
 
 ```{r}
 r2_time <- orchaRd::r2_ml(metareg_time) 
-r2_time
 r2_tib <- tibble(r2_time)
+r2_tib
 ```
+
 Table 5: Variation Explained by Time When Results were Published in lnRR 
+
 
 ### Formal meta-regression model that includes inverse sampling variance (i.e., 1vlnRR) to test for file-drawer biases - also getting rid of Year 0
 ```{r}
@@ -258,59 +277,36 @@ metareg_time_file <- rma.mv(lnRR ~ Year_c + vlnRR,
                             test = "t", 
                             dfs = "contain", 
                             data = merged_data)
-summary(metareg_time_file)
+sumfile <- summary(metareg_time_file)
+sumfile
 ```
+
+
+Table 6: Summary of the Multivariate Meta-Analysis Model for Time-Lag Bias with Variance Accounted For
 
 ```{r}
 r2_time2 <- orchaRd::r2_ml(metareg_time_file) 
-r2_time2
 r2_tib2 <- tibble(r2_time2)
 ```
 
-Table 6: Meta-Regression Model with Inverse Sampling Variance Testing for File-Drawer Bias
+Table 7: Meta-Regression Model with Inverse Sampling Variance Testing for File-Drawer Bias
+
+
 
 A written paragraph that discusses the potential for publication bias based on the meta-regression results. What type of publication bias, if any, appears to be present in the data? If publication bias is present, what does it mean and what might be contributing to such bias?
-```{r}
-
-```
-Based on the meta-regression results, it seems that there is evidence for publication bias, specifically, time-lag bias ? 
-
-meta analysis relies on things being selected at random but it seems as though some studies are only showing their results with big effects 
 
 
-Funnel Plot: 
+
 The asymmetry of the funnel plot in Figure 1 demonstrates publication bias is present in this meta-analysis. The majority of the points are leaning towards the left side of the estimate, with there being an outlier in the grey-zone in the left side around 25 on the y-axis  The majority of the data points between 1 and 25 are bunched together on the left side. 
 
-The Time-Lag Plot also demonstrates that there is publication bias present in the sample, it shows that there is a positive relationship between the average effect size and the year of publication, as they increase together. Studies in 2011 had a higher sampling variance than other years, and a bigger spread of lnRR. The earlier studies (before 2015) have higher data points for lnRR. In Table 5, the time-lag explains `r x = r2_tib[1,1]; x`% of the variation in lnRR. This could be seen as evidence of a time-lag bias as the mean effect size is expected to increase as more studies accumulate. 
+The Time-Lag Plot also demonstrates that there is publication bias present in the sample, it shows that there is a positive relationship between the average effect size and the year of publication, as they increase together. Studies in 2011 had a higher sampling variance than other years, and a bigger spread of lnRR. The earlier studies (before 2015) have higher data points for lnRR. In Table 5, the time-lag explains `r x = r2_tib[1,1]; x`% of the variation in lnRR, and when variance is accounted for, the time-lag explains `r x = r2_tib2[1,1]; x`% of the variation (Table 7). This could be seen as evidence of a time-lag bias as the mean effect size is expected to increase as more studies accumulate. 
+
+Using the centred on  the mean Year (Year_c), it can be seen that the intercept has an estimate of -0.1303% (Table 6) demonstrating the average correlation between effect size and activity. When Year 0 and variance wasn't accounted for, the intercept estimate was -264.0341% (Table 4). This estimate suggests, when accounting for both the variance and the time, that there is evidence to believe that there is time-lag and file-drawer bias present.
+
+
 
 It’s clear that we have evidence of a time-lag bias. The mean effect size is predicted to decrease as more studies accumulate! But, wait, we also have evidence for other possible publication biases, such as ‘file-drawer’ effects. We can actually create a model that accounts for both of these effects, and that accounts for the possible covariance between the two (i.e., sampling variance is expected to be high in early years). Let’s fit that model.
 
 
 
-time-lag: 
-There does appear to be a clear positive relationship with year.
-Also of note are that the earlier year studies have much higher sampling variance (i.e., lower precision), just like we might expect.
-These early studies appear to have a lower (exaggerated) effect size compared with studies that are done in later years. 
-
-
-funnel : 
-We can see from Fig. 1 above a non-typical funnel shape. 
-- 
-The reason why the shape is a funnel is because the sampling variance is expected to decrease (or the precision increase) when the sample size, and thus power, increases.
-‘High-powered’ studies are at the top of the ‘funnel’ in the narrow-necked region, so to say, because we expect the effect size from these studies to fluctuate very little based on the sampling process. Think back to your sampling distribution. When sample sizes were very large, the sampling distribution becomes very narrow!
-
-In contrast, as the power of studies decrease (small sample sizes), and therefore their sampling variance increases, we expect the spread of effect sizes to increase simply because small sample sizes results in greater variability of effects and effects that are larger in magnitude (by chance alone).
-
-
-Quantifying time lag bias using multilevel meta-regression: 
-r2 marginal <- Time-lag explains `r x = r2_tib[1,1]; x`% of the variation in lnRR. 
-It’s clear that we have evidence of a time-lag bias???? (year increases, intercept decreases alot) The mean effect size is predicted to increase as more studies accumulate! But, wait, we also have evidence for other possible publication biases, such as ‘file-drawer’ effects. 
-Great! That was easy. Just like any old linear mixed effect model we can just add moderators / fixed effects to the formula. Here, we can see that there is clear evidence, even when accounting for the covariance between the two, for both file-drawer and time-lag biases in these data.
-
-
-With year 0 gone:
-The overall mean correlation (r) when small sample and time-lag biases are controlled for is (intercept)
-
-MLMA:
-Yes, there is evidence for publication bias because the slope estimate for vlnRR is significant. We can see from this model that the adjusted lnRR when there is no uncertainty (i.e., the intercept) is -.1424 with a 95% confidence interval that overlaps zero (i.e., 95% CI = -0.3713 to 0.0865). 
 
