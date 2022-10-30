@@ -125,7 +125,6 @@ merged_data$residual <- 1:nrow(merged_data)
 ### Assessing data in tibble 
 ```{r}
 tibble(merged_data)
-
 ```
 Table 1: Tibble of Merged Data (Ocean Data and Clark Data) with means, sd and sample size for both treatments, as well as lnRR, vlnRR and residual columns. 
 
@@ -292,21 +291,39 @@ r2_tib2 <- tibble(r2_time2)
 Table 7: Meta-Regression Model with Inverse Sampling Variance Testing for File-Drawer Bias
 
 
+```{r}
+lowsamp <- filter(merged_data, Average.n <= 10)
+lowsamp_tib <- tibble(lowsamp)
+lowsamp_tib
+```
+Table 8: Studies that have a sample size lower than 10
 
-A written paragraph that discusses the potential for publication bias based on the meta-regression results. What type of publication bias, if any, appears to be present in the data? If publication bias is present, what does it mean and what might be contributing to such bias?
+```{r}
+highlnRR <- filter(merged_data, lnRR >= 5)
+highlnRR_tib <- tibble(highlnRR)
 
+lowlnRR <- filter(merged_data, lnRR <= -5)
+lowlnRR_tib <- tibble(lowlnRR)
 
+bindedlnRR <- bind_rows(highlnRR, lowlnRR)
+bindedlnRR_tib <- tibble(bindedlnRR)
+bindedlnRR_tib
+```
+Table 9: Studies with lnRR Values Under -5 or above +5.
 
 The asymmetry of the funnel plot in Figure 1 demonstrates publication bias is present in this meta-analysis. The majority of the points are leaning towards the left side of the estimate, with there being an outlier in the grey-zone in the left side around 25 on the y-axis  The majority of the data points between 1 and 25 are bunched together on the left side. 
 
-The Time-Lag Plot also demonstrates that there is publication bias present in the sample, it shows that there is a positive relationship between the average effect size and the year of publication, as they increase together. Studies in 2011 had a higher sampling variance than other years, and a bigger spread of lnRR. The earlier studies (before 2015) have higher data points for lnRR. In Table 5, the time-lag explains `r x = r2_tib[1,1]; x`% of the variation in lnRR, and when variance is accounted for, the time-lag explains `r x = r2_tib2[1,1]; x`% of the variation (Table 7). This could be seen as evidence of a time-lag bias as the mean effect size is expected to increase as more studies accumulate. 
+The Time-Lag Plot also demonstrates that there is publication bias present in the sample, it shows that there is a positive relationship between the average effect size and the year of publication, as they increase together. Studies in 2011 had a higher sampling variance than other years, and a bigger spread of lnRR. The earlier studies (before 2015) have higher data points for lnRR. In Table 5, the time-lag explains `r x = r2_tib[1,1]; x`% of the variation in lnRR, and when variance is accounted for, the time-lag explains `r x = r2_tib2[1,1]; x`% of the variation (Table 7). This could be seen as evidence of a time-lag bias as the mean effect size is expected to increase as more studies accumulate. By looking at Figure 3, it can be seen that as the years increase, the line is getting closer to 0 and therefore showing less bias over time. 
 
-Using the centred on  the mean Year (Year_c), it can be seen that the intercept has an estimate of -0.1303% (Table 6) demonstrating the average correlation between effect size and activity. When Year 0 and variance wasn't accounted for, the intercept estimate was -264.0341% (Table 4). This estimate suggests, when accounting for both the variance and the time, that there is evidence to believe that there is time-lag and file-drawer bias present.
+Using the centered on  the mean Year (Year_c), it can be seen that the intercept has an estimate of -0.1303% (Table 6) demonstrating the average correlation between effect size and activity. When Year 0 and variance wasn't accounted for, the intercept estimate was -264.0341% (Table 4). This estimate suggests, when accounting for both the variance and the time, that there is evidence to believe that there is time-lag and file-drawer bias present.
 
+Contributing to the publication may be file-drawer bias as it can be seen from Tables 6 and 7 that there is publication bias evident, however time-lag was ruled out as the least likely contender. P-hacking could also be evident as a result of small sample sizes being used in the studies. Figure 1 shows that the data in the Strong Effect Size group has a smaller amount of samples per study on average than those in the Weak group (8.3 vs 10.3), this demonstrates potential for skewed data as a smaller sampling size allows for more chance of a statistical error.
 
+In Table 8, studies with an average sample size lower than 10 is displayed - 10 was chosen as a random limit as the majority of the samples in this study have low sample sizes, so this is the smallest of them. The study "Irreversible behavioural impairment of fish starts early: Embryonic exposure to ocean acidification" has an avergage sample size of 4 and still published weak effect size - this is a prime example of a sample size that is far too small to properly detect any effect type. The control group in this study frequently had 4 samples, whilst the experimental group had 2 samples. Upon looking at Figure 1, it is evident that this study produced outlier data as when looking at the weak group there is an lnRR value at `r x = lowsamp_tib[95, 23]; x`, `r x = lowsamp_tib[101, 23]; x` and `r x = lowsamp_tib[104, 23]; x`, a far distance from the intercept estimate of -0.06 for the Weak effect group. 
 
-It’s clear that we have evidence of a time-lag bias. The mean effect size is predicted to decrease as more studies accumulate! But, wait, we also have evidence for other possible publication biases, such as ‘file-drawer’ effects. We can actually create a model that accounts for both of these effects, and that accounts for the possible covariance between the two (i.e., sampling variance is expected to be high in early years). Let’s fit that model.
+Another source for this publication bias could be studies with dodgy methods of collecting/choosing only good data to publish. In Table 9, data that had an lnRR value above +5 or below -5 was selected, and studies by Dixson and Munday were notably frequent to create very strong effect sizes. The control groups mean and standard deviation are monumentally lower than that of in the experimental groups (e.g. Control Mean: `r x = bindedlnRR_tib[11, 18]; x` vs. Experimental Mean: `r x = bindedlnRR_tib[11, 21]; x`% time in cue, 10 dph, 700ppm). The results of the effects of Co2 on fish seem to be far larger than effect sizes in similar studies, which suggests that the fish in this study are extremely impacted by presence of Co2 in their environment. The Clark study "Ocean Acidification does not impair the behaviour of coral reef fishes" directly opposes the results found in Munday and Dixson's papers. The Clark study utilised a longer period of viewing the effects on the fish, and a much larger sample size (45 vs. 10-25). 
 
+In the "Ocean acidification disrupts the innate ability of fish to detect predator olfactory cues" paper, there is possible repeated data, as the values for the "% time in predator cue, settlement stg, untreat vs.  pred 1" and "% time in predator cue, settlement stg, untreat vs.  pred 2" were identical, as well as the "% time in predator cue, settlement stg, pred 1 vs.  non-pred 1" and "% time in predator cue, settlement stg, non-pred 2 vs. pred 2". Unsurprisingly, these results yielded a "strong" effect type on Figure 1 and as seen in Table 9. 
 
-
+In the "Replenishment of fish populations is threatened by ocean acidification" paper, repeated zeroed data in the ctrl.mean column has lead to high lnRR values, creating strong effect sizes as there is always going to be a large difference from 0 (study data has made the size `r x = bindedlnRR_tib[11, 17]; x` to get rid of zeroed data) to any other number measured. This repeated data goes across 18 rows, 11 of which were in Table 9 (the other 7 had a 0 for the oa.mean and therefore created no effect as there was 0 difference in the results, and the lnRR was 0). All 11 that created an effect size were strong effect sizes, and are all seen in Figure 1 as outliers. 
 
