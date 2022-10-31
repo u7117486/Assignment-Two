@@ -1,6 +1,6 @@
 # Assignment-Two
 
-Most important file are the Assignment-Two.html provided. 
+The most important file is the Assignment-Two.html provided. 
 The Assignment-Two.rmd is the raw code used to render the html. 
 Clark_paper_data.csv contains the data for the Clark paper that was then utilised in the Assignment-Two.rmd - as was ocean_meta_data.csv and meta-data_ocean_meta.csv 
 
