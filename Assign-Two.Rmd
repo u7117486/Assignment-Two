@@ -327,5 +327,10 @@ In the "Ocean acidification disrupts the innate ability of fish to detect predat
 
 In the "Replenishment of fish populations is threatened by ocean acidification" paper, repeated zeroed data in the ctrl.mean column has lead to high lnRR values, creating strong effect sizes as there is always going to be a large difference from 0 (study data has made the size `r x = bindedlnRR_tib[11, 18]; x` to get rid of zeroed data) to any other number measured. This repeated data goes across 18 rows, 11 of which were in Table 9 (the other 7 had a 0 for the oa.mean and therefore created no effect as there was 0 difference in the results, and the lnRR was 0). All 11 that created an effect size were strong effect sizes, and are all seen in Figure 1 as outliers.
 
-The Science.org paper "Sea of Doubts" (https://www.science.org/content/article/does-ocean-acidification-alter-fish-behavior-fraud-allegations-create-sea-doubt) discusses the controversy of the potential publication bias in the Munday and Dixson studies, as well as Clark countering their results with his study. The concerns descibed are the same as those above (repeating data and suspected dodgy data) as well as claims of the researchers purposefully changing the data to better support their study's purpose. S
+The Science.org paper "Sea of Doubts" (https://www.science.org/content/article/does-ocean-acidification-alter-fish-behavior-fraud-allegations-create-sea-doubt) discusses the controversy of the potential publication bias in the Munday and Dixson studies, as well as Clark countering their results with his study. The concerns descibed are the same as those above (repeating data and suspected dodgy data) as well as claims of the researchers purposefully changing the data to better support their study's purpose. 
+
+
+
+Github:
+https://github.com/u7117486/Assignment-Two
 
